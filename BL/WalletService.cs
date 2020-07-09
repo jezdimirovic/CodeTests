@@ -5,7 +5,15 @@ using System.Threading.Tasks;
 
 namespace WebPrefer.Tests.BL
 {
-    public class WalletService
+    public interface IWalletService
+    {
+        Task<bool> HasWallet(int playerId, string currency);
+        Task<Money> GetBalance(int playerId, string currency);
+        Task Debit(int playerId, Money amount);
+        Task Credit(int playerId, Money amount);
+    }
+
+    public class WalletService : IWalletService
     {
         private Dictionary<int, Money> _wallets = new Dictionary<int, Money>()
         {
@@ -31,10 +39,14 @@ namespace WebPrefer.Tests.BL
 
         public Task Debit(int playerId, Money amount)
         {
-            if (_wallets[playerId] < amount)
-                throw new InsufficientFundsException();
+            if (_wallets[playerId].Amount < amount.Amount)
+            {
+                throw new InsufficientFundsException("InsufficentFunds");
+            }
 
-            _wallets[playerId] -= amount;
+            var wallet = _wallets[playerId];
+            wallet.Amount -= amount.Amount;
+            _wallets[playerId] = wallet;
 
             return Task.FromResult(0);
         }

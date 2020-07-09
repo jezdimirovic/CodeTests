@@ -7,8 +7,8 @@ namespace WebPrefer.Tests.BL
     {
         public static readonly string[] SupportedCurrencies = new string[] { "EUR", "SEK" };
 
-        public string Currency { get; }
-        public decimal Amount { get; }
+        public string Currency { get; set; }
+        public decimal Amount { get; set; }
 
         public Money(string currency, decimal amount = 0m)
         {

@@ -1,19 +1,27 @@
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace WebPrefer.Tests.BL
 {
-    public class CasinoService
+    public interface ICasinoService
     {
-        private WalletService _walletService;
+        Task<long> Wager(int playerId, string externalGameId, string externalTransactionId, long externalRoundId, Money amount);
+        Task<long> Win(int playerId, string externalGameId, string externalTransactionId, long externalRoundId, Money amount);
+        Task EndRound(long externalRoundId);
+    }
+
+    public class CasinoService : ICasinoService
+    {
+        private IWalletService _walletService;
 
         private Dictionary<string, long> _processedTransactions = new Dictionary<string, long>();
         private Dictionary<long, (Money TotalWager, Money TotalWin, bool Ended)> _rounds = new Dictionary<long, (Money TotalBet, Money TotalWin, bool ended)>();
 
         private long _lastTransactionId = 0;
 
-        public CasinoService(WalletService walletService)
+        public CasinoService(IWalletService walletService)
             => _walletService = walletService;
 
         public async Task<long> Wager(int playerId, string externalGameId, string externalTransactionId, long externalRoundId, Money amount)
@@ -39,10 +47,11 @@ namespace WebPrefer.Tests.BL
             }
 
             var transactionId = ++_lastTransactionId;
+            var playerBalance = await _walletService.GetBalance(playerId, amount.Currency);
 
-            if (await _walletService.GetBalance(playerId, amount.Currency) < amount)
+            if (playerBalance.Amount < amount.Amount)
             {
-                throw new InsufficientFundsException();
+                throw new InsufficientFundsException("InsufficentFunds");
             }
 
             await _walletService.Debit(playerId, amount);
@@ -65,6 +74,11 @@ namespace WebPrefer.Tests.BL
             if (round.Ended)
             {
                 throw new RoundEndedException();
+            }
+
+            if (!await _walletService.HasWallet(playerId, amount.Currency))
+            {
+                throw new InvalidCurrency();
             }
 
             round.TotalWin += amount;
@@ -101,5 +115,14 @@ namespace WebPrefer.Tests.BL
 
     public class RoundEndedException : Exception { }
 
-    public class InsufficientFundsException : Exception { }
+    public class InsufficientFundsException : Exception
+    {
+        public string ErrorCode { get; }
+        public InsufficientFundsException(string errorCode) : base(errorCode)
+        {
+            ErrorCode = errorCode;
+        }
+    }
+
+    public class InvalidCurrency : Exception { }
 }

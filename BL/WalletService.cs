@@ -9,7 +9,7 @@ namespace WebPrefer.Tests.BL
     {
         Task<bool> HasWallet(int playerId, string currency);
         Task<Money> GetBalance(int playerId, string currency);
-        Task Debit(int playerId, Money amount);
+        Task<int> Debit(int playerId, Money amount);
         Task Credit(int playerId, Money amount);
     }
 
@@ -37,18 +37,16 @@ namespace WebPrefer.Tests.BL
             return Task.FromResult(0);
         }
 
-        public Task Debit(int playerId, Money amount)
+        public async Task<int> Debit(int playerId, Money amount)
         {
             if (_wallets[playerId].Amount < amount.Amount)
             {
                 throw new InsufficientFundsException("InsufficentFunds");
             }
 
-            var wallet = _wallets[playerId];
-            wallet.Amount -= amount.Amount;
-            _wallets[playerId] = wallet;
+            _wallets[playerId] -= amount;
 
-            return Task.FromResult(0);
+            return await Task.FromResult(0);
         }
     }
 }

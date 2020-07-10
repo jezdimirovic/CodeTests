@@ -26,8 +26,8 @@ namespace WebPrefer.Tests
                 options.Filters.Add<ApiExceptionFilter>();
             }).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
-            services.AddScoped<ICasinoService, CasinoService>();
-            services.AddScoped<IWalletService, WalletService>();
+            services.AddSingleton<ICasinoService, CasinoService>();
+            services.AddSingleton<IWalletService, WalletService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -78,7 +78,7 @@ namespace WebPrefer.Tests.BL
 
             if (!await _walletService.HasWallet(playerId, amount.Currency))
             {
-                throw new InvalidCurrency();
+                throw new InvalidCurrencyException("InvalidCurrency");
             }
 
             round.TotalWin += amount;
@@ -124,5 +124,13 @@ namespace WebPrefer.Tests.BL
         }
     }
 
-    public class InvalidCurrency : Exception { }
+    public class InvalidCurrencyException : Exception {
+        public InvalidCurrencyException(string message) : base(message)
+        {
+        }
+
+        public InvalidCurrencyException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+    }
 }

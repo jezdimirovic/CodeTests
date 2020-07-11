@@ -1,4 +1,3 @@
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -17,7 +16,8 @@ namespace WebPrefer.Tests.BL
         private IWalletService _walletService;
 
         private Dictionary<string, long> _processedTransactions = new Dictionary<string, long>();
-        private Dictionary<long, (Money TotalWager, Money TotalWin, bool Ended)> _rounds = new Dictionary<long, (Money TotalBet, Money TotalWin, bool ended)>();
+        private Dictionary<long, (Money TotalWager, Money TotalWin, bool Ended)> _rounds = 
+            new Dictionary<long, (Money TotalBet, Money TotalWin, bool Ended)>();
 
         private long _lastTransactionId = 0;
 
@@ -40,7 +40,7 @@ namespace WebPrefer.Tests.BL
                 var round = _rounds[externalRoundId];
                 if (round.Ended)
                 {
-                    throw new RoundEndedException();
+                    throw new RoundEndedException("Round ended");
                 }
 
                 round.TotalWager += amount;
@@ -73,7 +73,7 @@ namespace WebPrefer.Tests.BL
 
             if (round.Ended)
             {
-                throw new RoundEndedException();
+                throw new RoundEndedException("Round ended");
             }
 
             if (!await _walletService.HasWallet(playerId, amount.Currency))
@@ -97,7 +97,7 @@ namespace WebPrefer.Tests.BL
                 throw new MissingRoundException();
             }
 
-            round.Ended = true;
+            _rounds[externalRoundId] = (_rounds[externalRoundId].TotalWager, _rounds[externalRoundId].TotalWin, true);
 
             return Task.FromResult(0);
         }
@@ -113,7 +113,18 @@ namespace WebPrefer.Tests.BL
 
     public class MissingRoundException : Exception { }
 
-    public class RoundEndedException : Exception { }
+    public class RoundEndedException : Exception
+    {
+        public RoundEndedException(string message) : base(message)
+        {
+
+        }
+
+        public RoundEndedException(string message, Exception innerException) : base(message, innerException)
+        {
+
+        }
+    }
 
     public class InsufficientFundsException : Exception
     {

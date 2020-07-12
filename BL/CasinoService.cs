@@ -28,7 +28,7 @@ namespace WebPrefer.Tests.BL
         {
             if (_processedTransactions.ContainsKey(externalTransactionId))
             {
-                throw new TransactionAlreadyProcessedException(_processedTransactions[externalTransactionId]);
+                throw new TransactionAlreadyProcessedException($"Transaction with Id {_processedTransactions[externalTransactionId]} already processed");
             }
 
             if (!_rounds.ContainsKey(externalRoundId))
@@ -46,7 +46,6 @@ namespace WebPrefer.Tests.BL
                 round.TotalWager += amount;
             }
 
-            var transactionId = ++_lastTransactionId;
             var playerBalance = await _walletService.GetBalance(playerId, amount.Currency);
 
             if (playerBalance.Amount < amount.Amount)
@@ -56,6 +55,9 @@ namespace WebPrefer.Tests.BL
 
             await _walletService.Debit(playerId, amount);
 
+            var transactionId = ++_lastTransactionId;
+            _processedTransactions.Add(externalTransactionId, transactionId);
+
             return transactionId;
         }
 
@@ -63,12 +65,12 @@ namespace WebPrefer.Tests.BL
         {
             if (_processedTransactions.ContainsKey(externalTransactionId))
             {
-                throw new TransactionAlreadyProcessedException(_processedTransactions[externalTransactionId]);
+                throw new TransactionAlreadyProcessedException($"Transaction with Id {_processedTransactions[externalTransactionId]} already processed");
             }
 
             if (!_rounds.TryGetValue(externalRoundId, out var round))
             {
-                throw new MissingRoundException();
+                throw new MissingRoundException("MissingRound");
             }
 
             if (round.Ended)
@@ -94,7 +96,7 @@ namespace WebPrefer.Tests.BL
         {
             if (!_rounds.TryGetValue(externalRoundId, out var round))
             {
-                throw new MissingRoundException();
+                throw new MissingRoundException("MissingRound");
             }
 
             _rounds[externalRoundId] = (_rounds[externalRoundId].TotalWager, _rounds[externalRoundId].TotalWin, true);
@@ -107,11 +109,29 @@ namespace WebPrefer.Tests.BL
     {
         public long TransactionId { get; }
 
-        public TransactionAlreadyProcessedException(long transactionId)
-            => TransactionId = transactionId;
+        public TransactionAlreadyProcessedException(string message) : base(message)
+        {
+
+        }
+
+        public TransactionAlreadyProcessedException(string message, Exception innerException) : base(message, innerException)
+        {
+
+        }
     }
 
-    public class MissingRoundException : Exception { }
+    public class MissingRoundException : Exception 
+    {
+        public MissingRoundException(string message) : base(message)
+        {
+
+        }
+
+        public MissingRoundException(string message, Exception innerException) : base(message, innerException)
+        {
+
+        }
+    }
 
     public class RoundEndedException : Exception
     {
@@ -128,10 +148,12 @@ namespace WebPrefer.Tests.BL
 
     public class InsufficientFundsException : Exception
     {
-        public string ErrorCode { get; }
-        public InsufficientFundsException(string errorCode) : base(errorCode)
+        public InsufficientFundsException(string message) : base(message)
         {
-            ErrorCode = errorCode;
+        }
+
+        public InsufficientFundsException(string message, Exception innerException) : base(message, innerException)
+        {
         }
     }
 
